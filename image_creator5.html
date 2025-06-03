@@ -191,7 +191,7 @@
 
         // Draw blurred background
         ctx.save();
-        ctx.filter = 'blur(30px) brightness(1.2)';
+        ctx.filter = 'blur(30px)'; // brightness(1.2) removed
         if (imgRatio < canvasRatio) {
           const h = canvas.width / imgRatio;
           ctx.drawImage(uploadedImage, 0, (canvas.height - h) / 2, canvas.width, h);
