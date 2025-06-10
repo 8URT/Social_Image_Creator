@@ -9,68 +9,88 @@
   <script src="https://cdn.tailwindcss.com"></script>
   
   <style>
+    /* Dark Theme Styles */
     .gradient-bg {
-      background: #f3ffef; /* Light green-ish background */
+      background: #2a2a2a; /* Dark background */
     }
     
+    .text-primary {
+      color: #e0e0e0; /* Light gray text for primary content */
+    }
+
+    .text-secondary {
+      color: #a0a0a0; /* Slightly darker gray for secondary text */
+    }
+
+    .card-bg {
+      background-color: #333333; /* Darker card background */
+      border-color: #444444; /* Darker border for cards */
+    }
+
+    .dropzone-bg {
+      background: linear-gradient(135deg, #3d3d3d 0%, #4a4a4a 100%); /* Dark gradient for dropzone */
+      border-color: #666666; /* Visible border for dropzone */
+    }
+
+    .dropzone-hover {
+        border-color: #6a5acd !important; /* Medium purple on drag-over */
+        background-color: #4d4d5e !important; /* Darker purple background on drag-over */
+    }
+
+    /* Button Styles */
     .import-button {
-      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); /* Green gradient */
+      background: linear-gradient(135deg, #7b68ee 0%, #6a5acd 100%); /* Medium purple gradient */
     }
     
     .import-button:hover {
-      box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+      box-shadow: 0 5px 15px rgba(123, 104, 238, 0.4);
     }
     
     .process-button {
-      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); /* Blue gradient */
+      background: linear-gradient(135deg, #20b2aa 0%, #008b8b 100%); /* Teal gradient */
     }
 
     .process-button:hover {
-      box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+      box-shadow: 0 5px 15px rgba(32, 178, 170, 0.4);
     }
     
     .download-button {
-      background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+      background: linear-gradient(135deg, #4b5563 0%, #374151 100%); /* Dark gray gradient */
     }
 
     .download-button:hover {
-      box-shadow: 0 5px 15px rgba(107, 114, 128, 0.4);
+      box-shadow: 0 5px 15px rgba(75, 85, 99, 0.4);
     }
     
     #canvas {
       max-width: 100%;
       height: auto;
-      border: 1px solid #e5e7eb; /* Light gray border */
-    }
-
-    /* Style for the drag-over state */
-    .drag-over {
-        border-color: #2196F3 !important; /* Blue border on drag-over */
-        background-color: #e3f2fd !important; /* Light blue background on drag-over */
+      border: 1px solid #444444; /* Dark border for canvas */
+      background-color: #3d3d3d; /* Dark background for canvas */
     }
   </style>
 </head>
 <body class="min-h-screen gradient-bg p-4 font-['Fira_Sans']">
   <div class="max-w-5xl mx-auto">
-    <div class="text-gray-800 text-center py-2 mb-3">
-      <h1 class="text-4xl font-extrabold text-green-700">Bulk Image Watermarker</h1>
-      <p class="text-lg text-gray-600">Process multiple images with your custom watermarks.</p>
+    <div class="text-center py-2 mb-3">
+      <h1 class="text-4xl font-extrabold text-primary">Bulk Image Watermarker</h1>
+      <p class="text-lg text-secondary">Process multiple images with your custom watermarks.</p>
     </div>
 
     <div class="rounded-3xl overflow-hidden">
       <div class="grid lg:grid-cols-[320px_1fr] gap-4 p-4">
-        <div class="bg-white p-5 rounded-2xl shadow-lg border border-gray-200">
-          <div id="imageDropZone" class="border-4 border-dotted border-gray-400 rounded-2xl p-5 text-center mb-4 bg-gradient-to-br from-gray-50 to-gray-100 transition-all duration-300 cursor-pointer hover:border-gray-500 hover:shadow-lg hover:-translate-y-1">
+        <div class="card-bg p-5 rounded-2xl shadow-lg border">
+          <div id="imageDropZone" class="border-4 border-dotted rounded-2xl p-5 text-center mb-4 dropzone-bg transition-all duration-300 cursor-pointer hover:dropzone-hover">
               <input type="file" id="imageUpload" accept="image/*" multiple class="hidden" />
-              <p class="text-base text-gray-600 font-bold mb-3">Drag & Drop multiple images here</p>
+              <p class="text-base text-primary font-bold mb-3">Drag & Drop multiple images here</p>
               <button type="button" onclick="document.getElementById('imageUpload').click()" class="import-button text-white px-4 py-2 rounded-full font-bold transition-all duration-300 hover:-translate-y-1 text-sm">or Click to Select Images</button>
-              <div class="mt-3 p-3 bg-gray-100 rounded-xl text-xs text-gray-600 leading-relaxed">
-                <span class="text-blue-600 font-bold">Note:</span> Images will be rendered in their original aspect ratio, scaled to a maximum of 2000px (width or height).
+              <div class="mt-3 p-3 bg-gray-700 rounded-xl text-xs text-secondary leading-relaxed">
+                <span class="text-purple-300 font-bold">Note:</span> Images will be rendered in their original aspect ratio, scaled to a maximum of 2000px (width or height).
               </div>
           </div>
 
           <div class="space-y-4">
-            <div id="processingStatus" class="text-center text-sm text-gray-700 font-medium hidden">
+            <div id="processingStatus" class="text-center text-sm text-primary font-medium hidden">
                 <p id="processedCountText">0/0 images processed</p>
             </div>
 
@@ -86,7 +106,7 @@
         </div>
 
         <div class="flex justify-center items-start">
-          <canvas id="canvas" width="600" height="300" class="rounded-xl shadow-xl bg-gray-50"></canvas>
+          <canvas id="canvas" width="600" height="300" class="rounded-xl shadow-xl"></canvas>
         </div>
       </div>
     </div>
@@ -102,7 +122,11 @@
     const processedCountText = document.getElementById('processedCountText');
 
     const MAX_DIMENSION = 2000; // Maximum width or height for output images
-    const WATERMARK_PADDING = 20; // Fixed padding for watermarks from bottom/left
+
+    // Logo Padding (Adjusted as requested)
+    const LOGO_BOTTOM_PADDING = 50; 
+    const LOGO_LEFT_PADDING = 100;
+    const LOGO_SPACING = 10; // Spacing between logos
 
     let filesToProcess = [];
     let processedImages = []; // Stores { name: originalFileName, url: dataURL }
@@ -110,7 +134,7 @@
 
     // Load watermark images
     const watermarkLogo = new Image();
-    watermarkLogo.src = 'assets/logo.png';
+    watermarkLogo.src = 'assets/logo.png'; // Make sure this path is correct!
     let watermarkLogoLoaded = false;
     watermarkLogo.onload = () => {
       watermarkLogoLoaded = true;
@@ -124,7 +148,7 @@
     };
 
     const watermarkAsset2 = new Image();
-    watermarkAsset2.src = 'assets/Asset 2@1.png';
+    watermarkAsset2.src = 'assets/Asset 2@1.png'; // Make sure this path is correct!
     let watermarkAsset2Loaded = false;
     watermarkAsset2.onload = () => {
       watermarkAsset2Loaded = true;
@@ -144,18 +168,18 @@
     }
 
     function highlight() {
-      document.getElementById('imageDropZone').classList.add('drag-over');
+      document.getElementById('imageDropZone').classList.add('dropzone-hover');
     }
 
     function unhighlight() {
-      document.getElementById('imageDropZone').classList.remove('drag-over');
+      document.getElementById('imageDropZone').classList.remove('dropzone-hover');
     }
 
     function drawInitialCanvas(message = "Upload or Drag & Drop Images Here") {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#f0f0f0';
+        ctx.fillStyle = '#3d3d3d'; // Canvas background color
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#666';
+        ctx.fillStyle = '#a0a0a0'; // Text color
         ctx.font = "700 24px 'Fira Sans', sans-serif";
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -297,7 +321,7 @@
                 // LAYER 1: Blur Background
                 offscreenCtx.save();
                 offscreenCtx.filter = 'blur(30px)';
-                // The blur image should always "cover" its drawing area
+                // The blur image should always "cover" its drawing area within the offscreenCanvas
                 let blurImgW = newWidth, blurImgH = newHeight;
                 const blurImgRatio = originalWidth / originalHeight; // Use original image ratio for blur
                 const offscreenCanvasRatio = offscreenCanvas.width / offscreenCanvas.height;
@@ -321,28 +345,27 @@
                 offscreenCtx.restore();
 
                 // LAYER 3: Watermarks
-                const currentWatermarkX = WATERMARK_PADDING;
-                const watermarkBaseY = newHeight - WATERMARK_PADDING;
+                let currentWatermarkX = LOGO_LEFT_PADDING;
+                const watermarkBaseY = newHeight - LOGO_BOTTOM_PADDING;
 
                 offscreenCtx.save();
                 // Draw Asset 2@1.png watermark
                 if (watermarkAsset2Loaded) {
-                    const asset2Height = 42; // Fixed height
+                    const asset2Height = 42; // Fixed height for Asset 2
                     const asset2Width = watermarkAsset2.width * (asset2Height / watermarkAsset2.height);
                     offscreenCtx.globalAlpha = 1.0;
                     const asset2Y = watermarkBaseY - asset2Height;
                     offscreenCtx.drawImage(watermarkAsset2, currentWatermarkX, asset2Y, asset2Width, asset2Height);
-                    // Update X for next watermark
-                    offscreenCtx.translate(asset2Width + 10, 0); // Move context for logo
+                    currentWatermarkX += asset2Width + LOGO_SPACING; // Update X for next watermark
                 }
 
                 // Draw logo.png watermark
                 if (watermarkLogoLoaded) {
-                    const logoHeight = 49; // Fixed height
+                    const logoHeight = 49; // Fixed height for main logo
                     const logoWidth = watermarkLogo.width * (logoHeight / watermarkLogo.height);
                     offscreenCtx.globalAlpha = 1.0;
                     const logoY = watermarkBaseY - logoHeight;
-                    offscreenCtx.drawImage(watermarkLogo, currentWatermarkX, logoY, logoWidth, logoHeight); // X relative to translated context
+                    offscreenCtx.drawImage(watermarkLogo, currentWatermarkX, logoY, logoWidth, logoHeight); 
                 }
                 offscreenCtx.restore();
 
@@ -381,11 +404,12 @@
         processedImages.forEach((image, i) => {
             setTimeout(() => { // Add a small delay to prevent browser from blocking multiple downloads
                 const link = document.createElement('a');
-                link.download = `watermarked_${image.name.replace(/\.[^/.]+$/, "")}.webp`; // Rename to .webp
+                // Ensure a .webp extension for consistency and proper file recognition
+                link.download = `watermarked_${image.name.replace(/\.[^/.]+$/, "")}.webp`; 
                 link.href = image.url;
-                document.body.appendChild(link); // Required for Firefox
+                document.body.appendChild(link); // Required for Firefox to trigger download
                 link.click();
-                document.body.removeChild(link); // Clean up
+                document.body.removeChild(link); // Clean up the temporary link element
 
                 downloadCounter++;
                 if (downloadCounter === processedImages.length) {
@@ -395,7 +419,7 @@
                     downloadAllButton.disabled = false;
                     resetUI(); // Reset UI after successful download
                 }
-            }, i * 100); // 100ms delay between each download
+            }, i * 100); // 100ms delay between each download to help browsers
         });
     }
 
