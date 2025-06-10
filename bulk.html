@@ -269,7 +269,7 @@
         processImage(0);
     }
 
-    function processImage(index) {
+  function processImage(index) {
         if (index >= filesToProcess.length) {
             // All images processed
             processImagesButton.disabled = false;
@@ -344,7 +344,20 @@
                 offscreenCtx.fillRect(0, 0, newWidth, newHeight);
                 offscreenCtx.restore();
 
-                // LAYER 3: Watermarks
+                // LAYER 3: Center Watermark Logo (New Addition)
+                if (watermarkLogoLoaded) {
+                    offscreenCtx.save();
+                    const centerLogoWidth = 500;
+                    const centerLogoHeight = watermarkLogo.height * (centerLogoWidth / watermarkLogo.width); // Maintain aspect ratio
+                    const centerLogoX = (newWidth - centerLogoWidth) / 2;
+                    const centerLogoY = (newHeight - centerLogoHeight) / 2;
+
+                    offscreenCtx.globalAlpha = 0.02; // 2% opacity
+                    offscreenCtx.drawImage(watermarkLogo, centerLogoX, centerLogoY, centerLogoWidth, centerLogoHeight);
+                    offscreenCtx.restore();
+                }
+
+                // LAYER 4: Bottom-Left Watermarks (Existing)
                 let currentWatermarkX = LOGO_LEFT_PADDING;
                 const watermarkBaseY = newHeight - LOGO_BOTTOM_PADDING;
 
