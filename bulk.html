@@ -123,10 +123,18 @@
 
     const MAX_DIMENSION = 2000; // Maximum width or height for output images
 
-    // Logo Padding (Adjusted as requested)
+    // Logo Padding (Adjusted as requested, now refers to *fixed margins*)
     const LOGO_BOTTOM_PADDING = 50; 
     const LOGO_LEFT_PADDING = 100;
     const LOGO_SPACING = 10; // Spacing between logos
+
+    // Dynamic Logo Sizing Parameters
+    const CENTER_LOGO_WIDTH_RATIO = 0.5; // Central logo will be 50% of image width
+    const MAX_CENTER_LOGO_WIDTH = 800; // Max pixel width for central logo
+
+    const BOTTOM_LOGO_HEIGHT_RATIO_ASSET2 = 0.05; // Asset 2 logo height will be 5% of image height
+    const BOTTOM_LOGO_HEIGHT_RATIO_MAIN = 0.06; // Main logo height will be 6% of image height
+    const MAX_BOTTOM_LOGO_HEIGHT = 60; // Max pixel height for bottom logos
 
     let filesToProcess = [];
     let processedImages = []; // Stores { name: originalFileName, url: dataURL }
@@ -347,8 +355,13 @@
                 // LAYER 3: Center Watermark Logo
                 if (watermarkLogoLoaded) {
                     offscreenCtx.save();
-                    const centerLogoWidth = 500;
+                    // Calculate dynamic size based on image width, capped by MAX_CENTER_LOGO_WIDTH
+                    let centerLogoWidth = newWidth * CENTER_LOGO_WIDTH_RATIO;
+                    if (centerLogoWidth > MAX_CENTER_LOGO_WIDTH) {
+                        centerLogoWidth = MAX_CENTER_LOGO_WIDTH;
+                    }
                     const centerLogoHeight = watermarkLogo.height * (centerLogoWidth / watermarkLogo.width); // Maintain aspect ratio
+                    
                     const centerLogoX = (newWidth - centerLogoWidth) / 2;
                     const centerLogoY = (newHeight - centerLogoHeight) / 2;
 
@@ -357,14 +370,18 @@
                     offscreenCtx.restore();
                 }
 
-                // LAYER 4: Bottom-Left Watermarks (Existing)
+                // LAYER 4: Bottom-Left Watermarks
                 let currentWatermarkX = LOGO_LEFT_PADDING;
                 const watermarkBaseY = newHeight - LOGO_BOTTOM_PADDING;
 
                 offscreenCtx.save();
-                // Draw Asset 2@1.png watermark (5px taller)
+                // Draw Asset 2@1.png watermark (dynamic height)
                 if (watermarkAsset2Loaded) {
-                    const asset2Height = 47; // Adjusted: 42 + 5 = 47
+                    // Calculate dynamic height based on image height, capped by MAX_BOTTOM_LOGO_HEIGHT
+                    let asset2Height = newHeight * BOTTOM_LOGO_HEIGHT_RATIO_ASSET2; 
+                    if (asset2Height > MAX_BOTTOM_LOGO_HEIGHT) {
+                        asset2Height = MAX_BOTTOM_LOGO_HEIGHT;
+                    }
                     const asset2Width = watermarkAsset2.width * (asset2Height / watermarkAsset2.height);
                     offscreenCtx.globalAlpha = 1.0;
                     const asset2Y = watermarkBaseY - asset2Height;
@@ -372,9 +389,13 @@
                     currentWatermarkX += asset2Width + LOGO_SPACING; // Update X for next watermark
                 }
 
-                // Draw logo.png watermark (5px taller)
+                // Draw logo.png watermark (dynamic height)
                 if (watermarkLogoLoaded) {
-                    const logoHeight = 54; // Adjusted: 49 + 5 = 54
+                    // Calculate dynamic height based on image height, capped by MAX_BOTTOM_LOGO_HEIGHT
+                    let logoHeight = newHeight * BOTTOM_LOGO_HEIGHT_RATIO_MAIN; 
+                    if (logoHeight > MAX_BOTTOM_LOGO_HEIGHT) {
+                        logoHeight = MAX_BOTTOM_LOGO_HEIGHT;
+                    }
                     const logoWidth = watermarkLogo.width * (logoHeight / watermarkLogo.height);
                     offscreenCtx.globalAlpha = 1.0;
                     const logoY = watermarkBaseY - logoHeight;
