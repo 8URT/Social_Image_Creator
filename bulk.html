@@ -47,7 +47,7 @@
     }
     
     .process-button {
-      background: linear-gradient(135deg, #20b2aa 0%, #008b8b 100%); /* Teal gradient */
+      background: linear:gradient(135deg, #20b2aa 0%, #008b8b 100%); /* Teal gradient */
     }
 
     .process-button:hover {
@@ -367,7 +367,7 @@
                     const centerLogoX = (newWidth - centerLogoWidth) / 2;
                     const centerLogoY = (newHeight - centerLogoHeight) / 2;
 
-                    offscreenCtx.globalAlpha = 0.02; // 2% opacity
+                    offscreenCtx.globalAlpha = 0.04; // 4% opacity (Changed from 0.02)
                     offscreenCtx.drawImage(watermarkLogo, centerLogoX, centerLogoY, centerLogoWidth, centerLogoHeight);
                     offscreenCtx.restore();
                 }
