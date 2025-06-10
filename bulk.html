@@ -269,7 +269,7 @@
         processImage(0);
     }
 
-  function processImage(index) {
+    function processImage(index) {
         if (index >= filesToProcess.length) {
             // All images processed
             processImagesButton.disabled = false;
@@ -344,7 +344,7 @@
                 offscreenCtx.fillRect(0, 0, newWidth, newHeight);
                 offscreenCtx.restore();
 
-                // LAYER 3: Center Watermark Logo (New Addition)
+                // LAYER 3: Center Watermark Logo
                 if (watermarkLogoLoaded) {
                     offscreenCtx.save();
                     const centerLogoWidth = 500;
@@ -362,9 +362,9 @@
                 const watermarkBaseY = newHeight - LOGO_BOTTOM_PADDING;
 
                 offscreenCtx.save();
-                // Draw Asset 2@1.png watermark
+                // Draw Asset 2@1.png watermark (5px taller)
                 if (watermarkAsset2Loaded) {
-                    const asset2Height = 42; // Fixed height for Asset 2
+                    const asset2Height = 47; // Adjusted: 42 + 5 = 47
                     const asset2Width = watermarkAsset2.width * (asset2Height / watermarkAsset2.height);
                     offscreenCtx.globalAlpha = 1.0;
                     const asset2Y = watermarkBaseY - asset2Height;
@@ -372,9 +372,9 @@
                     currentWatermarkX += asset2Width + LOGO_SPACING; // Update X for next watermark
                 }
 
-                // Draw logo.png watermark
+                // Draw logo.png watermark (5px taller)
                 if (watermarkLogoLoaded) {
-                    const logoHeight = 49; // Fixed height for main logo
+                    const logoHeight = 54; // Adjusted: 49 + 5 = 54
                     const logoWidth = watermarkLogo.width * (logoHeight / watermarkLogo.height);
                     offscreenCtx.globalAlpha = 1.0;
                     const logoY = watermarkBaseY - logoHeight;
