@@ -69,6 +69,19 @@
           <button type="button" id="imageSizeMode" class="w-full px-4 py-2 mb-4 border-2 border-gray-300 rounded-xl font-bold transition-all duration-300 hover:border-blue-500 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 text-sm">
             Fill Frame (Cover)
           </button>
+
+          <div id="imagePositionControls" class="space-y-3 mb-4">
+            <div>
+              <label for="imageOffsetX" class="block font-bold text-gray-600 mb-1 text-xs">Image X Offset:</label>
+              <input type="range" id="imageOffsetX" min="-500" max="500" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+              <div class="text-xs text-gray-500 text-right"><span id="imageOffsetXValue">0</span> px</div>
+            </div>
+            <div>
+              <label for="imageOffsetY" class="block font-bold text-gray-600 mb-1 text-xs">Image Y Offset:</label>
+              <input type="range" id="imageOffsetY" min="-500" max="500" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+              <div class="text-xs text-gray-500 text-right"><span id="imageOffsetYValue">0</span> px</div>
+            </div>
+          </div>
           <div class="space-y-4">
             <div>
               <textarea id="title" rows="3" placeholder="Main title here..." maxlength="200" class="w-full px-3 py-2 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300 resize-y min-h-[60px] text-sm"></textarea>
@@ -145,7 +158,16 @@
     const imageSizeModeButton = document.getElementById('imageSizeMode');
     let imageCoverMode = false; // false = 'fit', true = 'cover'
 
+    const imagePositionControls = document.getElementById('imagePositionControls');
+    const imageOffsetXInput = document.getElementById('imageOffsetX');
+    const imageOffsetYInput = document.getElementById('imageOffsetY');
+    const imageOffsetXValueSpan = document.getElementById('imageOffsetXValue');
+    const imageOffsetYValueSpan = document.getElementById('imageOffsetYValue');
+
     let uploadedImage = null;
+    let currentImageOffsetX = 0;
+    let currentImageOffsetY = 0;
+
 
     // Load watermark images (fixed)
     const watermarkLogo = new Image();
@@ -201,6 +223,7 @@
         const img = new Image();
         img.onload = () => {
           uploadedImage = img;
+          resetImageOffsets(); // Reset offsets when a new image is loaded
           drawCanvas();
         };
         img.onerror = () => {
@@ -278,6 +301,27 @@
       drawCanvas();
     });
 
+    function resetImageOffsets() {
+        currentImageOffsetX = 0;
+        currentImageOffsetY = 0;
+        imageOffsetXInput.value = 0;
+        imageOffsetYInput.value = 0;
+        imageOffsetXValueSpan.textContent = 0;
+        imageOffsetYValueSpan.textContent = 0;
+    }
+
+    imageOffsetXInput.addEventListener('input', (e) => {
+        currentImageOffsetX = parseInt(e.target.value);
+        imageOffsetXValueSpan.textContent = currentImageOffsetX;
+        drawCanvas();
+    });
+
+    imageOffsetYInput.addEventListener('input', (e) => {
+        currentImageOffsetY = parseInt(e.target.value);
+        imageOffsetYValueSpan.textContent = currentImageOffsetY;
+        drawCanvas();
+    });
+
     backgroundColorPicker.addEventListener('input', () => {
         const selectedValue = backgroundColorPicker.value.toUpperCase();
         let found = false;
@@ -311,64 +355,8 @@
       // 1. Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 2. Draw Background Image (if available)
-      if (uploadedImage) {
-        const imgRatio = uploadedImage.width / uploadedImage.height;
-        const canvasRatio = canvas.width / canvas.height;
-
-        ctx.save(); 
-
-        // Draw blurred background only if NOT in cover mode (i.e., in 'fit' mode)
-        // For blur, we want the blur to cover the whole canvas, so we use cover-like logic
-        if (!imageCoverMode) {
-            ctx.filter = 'blur(30px)';
-            let blurImgW = canvas.width, blurImgH = canvas.height;
-            if (imgRatio < canvasRatio) { // Image is taller than canvas, fill canvas width
-                blurImgH = canvas.width / imgRatio;
-                blurImgW = canvas.width;
-            } else { // Image is wider than canvas, fill canvas height
-                blurImgW = canvas.height * imgRatio;
-                blurImgH = canvas.height;
-            }
-            ctx.drawImage(uploadedImage, (canvas.width - blurImgW) / 2, (canvas.height - blurImgH) / 2, blurImgW, blurImgH);
-            ctx.filter = 'none'; // Reset filter immediately after use
-        }
-        
-        // Draw the main sharp image based on mode
-        let mainImgX = 0, mainImgY = 0, mainImgW = canvas.width, mainImgH = canvas.height;
-
-        if (imageCoverMode) {
-          // "Cover" mode: Fill the canvas, potentially cropping
-          if (imgRatio > canvasRatio) { // Image is wider than canvas
-            mainImgH = canvas.height;
-            mainImgW = mainImgH * imgRatio;
-            mainImgX = (canvas.width - mainImgW) / 2;
-          } else { // Image is taller than canvas
-            mainImgW = canvas.width;
-            mainImgH = mainImgW / imgRatio;
-            mainImgY = (canvas.height - mainImgH) / 2;
-          }
-        } else {
-          // "Fit" mode: Show the entire image, potentially with blank areas (overlaid on blur)
-          if (imgRatio < canvasRatio) { // Image is taller than canvas
-            mainImgH = canvas.height;
-            mainImgW = mainImgH * imgRatio;
-            mainImgX = (canvas.width - mainImgW) / 2;
-          } else { // Image is wider than canvas
-            mainImgW = canvas.width;
-            mainImgH = mainImgW / imgRatio;
-            mainImgY = (canvas.height - mainImgH) / 2;
-          }
-        }
-        ctx.drawImage(uploadedImage, mainImgX, mainImgY, mainImgW, mainImgH);
-
-        // Light overall overlay to blend (always applied on top of main image)
-        ctx.fillStyle = 'rgba(0,0,0,0.1)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.restore(); // Restore state after drawing main image and its light overlay
-      } else {
-        // Fallback if no image uploaded
+      // Fallback if no image uploaded (this remains at the very top)
+      if (!uploadedImage) {
         ctx.fillStyle = '#ccc';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#444';
@@ -381,7 +369,69 @@
         return; // Stop drawing if no image
       }
 
-      // 3. Text Wrapping and Sizing Logic (Only for Main Title)
+      const imgRatio = uploadedImage.width / uploadedImage.height;
+      const canvasRatio = canvas.width / canvas.height;
+
+      // --- LAYER 1: Blur Background (BOTTOM-MOST LAYER) ---
+      ctx.save();
+      if (!imageCoverMode) {
+          ctx.filter = 'blur(30px)';
+          let blurImgW = canvas.width, blurImgH = canvas.height;
+          if (imgRatio < canvasRatio) { // Image is taller than canvas
+              blurImgH = canvas.width / imgRatio;
+              blurImgW = canvas.width;
+          } else { // Image is wider than canvas
+              blurImgW = canvas.height * imgRatio;
+              blurImgH = canvas.height;
+          }
+          ctx.drawImage(uploadedImage, (canvas.width - blurImgW) / 2, (canvas.height - blurImgH) / 2, blurImgW, blurImgH);
+          ctx.filter = 'none'; // Reset filter
+      }
+      ctx.restore(); // Restore state after blur
+
+      // --- LAYER 2: Main Sharp Image ---
+      ctx.save();
+      let mainImgX = 0, mainImgY = 0, mainImgW = canvas.width, mainImgH = canvas.height;
+
+      if (imageCoverMode) {
+        // "Cover" mode: Fill the canvas, potentially cropping
+        if (imgRatio > canvasRatio) { // Image is wider than canvas
+          mainImgH = canvas.height;
+          mainImgW = mainImgH * imgRatio;
+          mainImgX = (canvas.width - mainImgW) / 2;
+        } else { // Image is taller than canvas
+          mainImgW = canvas.width;
+          mainImgH = mainImgW / imgRatio;
+          mainImgY = (canvas.height - mainImgH) / 2;
+        }
+        // Apply offsets to pan the 'covered' image
+        mainImgX += currentImageOffsetX;
+        mainImgY += currentImageOffsetY;
+
+      } else {
+        // "Fit" mode: Show the entire image, potentially with blank areas (overlaid on blur)
+        if (imgRatio < canvasRatio) { // Image is taller than canvas
+          mainImgH = canvas.height;
+          mainImgW = mainImgH * imgRatio;
+          mainImgX = (canvas.width - mainImgW) / 2;
+        } else { // Image is wider than canvas
+          mainImgW = canvas.width;
+          mainImgH = mainImgW / imgRatio; // Corrected calculation for fit mode
+          mainImgY = (canvas.height - mainImgH) / 2;
+        }
+        // Apply offsets to pan the 'fit' image
+        mainImgX += currentImageOffsetX;
+        mainImgY += currentImageOffsetY;
+      }
+      ctx.drawImage(uploadedImage, mainImgX, mainImgY, mainImgW, mainImgH);
+      
+      // Light overall overlay to blend (applied on top of main image)
+      ctx.fillStyle = 'rgba(0,0,0,0.1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.restore(); // Restore state after drawing main image and its light overlay
+
+      // --- Prepare for Text & Gradient Positioning (Calculations) ---
       const titleRaw = titleInput.value.trim();
       const placement = parseInt(placementInput.value);
       let titleSize = parseInt(titleSizeInput.value);
@@ -413,13 +463,9 @@
       }
 
       const updatedTitleLineHeight = titleSize * 1.05;
-
-      // Calculate total text block height (only title now)
       let textBlockHeight = titleLines.length * updatedTitleLineHeight;
 
-
-      // 4. Determine Text Placement Coordinates
-      // Adjusted for new canvas height
+      // Determine Text Placement Coordinates (Needed for Gradient and Text positioning)
       const placementMap = {
         1: { x: 50, align: 'left', y: 50 }, 
         3: { x: 50, align: 'left', y: 0 },  
@@ -432,17 +478,16 @@
       let posY = placementMap?.[placement]?.y ?? 50; 
 
       // Adjusted reference point for bottom placements
+      const watermarkAreaHeight = Math.max(
+          (watermarkLogoLoaded ? 49 : 0), 
+          (watermarkAsset2Loaded ? 42 : 0) 
+      );
+      const bottomOffsetForText = 35 + watermarkAreaHeight + 10; 
       if (placement === 3 || placement === 6) {
-        // Calculate Y from bottom, leaving space for text block and watermarks
-        const watermarkAreaHeight = Math.max(
-            (watermarkLogoLoaded ? 49 : 0), 
-            (watermarkAsset2Loaded ? 42 : 0) 
-        );
-        const bottomOffsetForText = 35 + watermarkAreaHeight + 10; 
         posY = canvas.height - bottomOffsetForText - textBlockHeight;
       }
 
-      // 5. Draw Placement-Specific Gradient Overlay
+      // --- LAYER 3: Placement-Specific Gradient Overlay ---
       const gradientPadding = 150;
       let gradient;
 
@@ -478,7 +523,38 @@
       ctx.restore(); 
 
 
-      // 6. Draw Main Title Text
+      // --- LAYER 4: Watermarks (Logos) ---
+      const watermarkBottomPadding = 35; 
+      const watermarkLeftPadding = 50;
+      const watermarkSpacing = 10; 
+
+      let currentWatermarkX = watermarkLeftPadding;
+      let watermarkBaseY = canvas.height - watermarkBottomPadding; 
+
+      ctx.save(); 
+
+      // Draw Asset 2@1.png watermark (height 42px, opacity 100%)
+      if (watermarkAsset2Loaded) {
+          const asset2Height = 42; 
+          const asset2Width = watermarkAsset2.width * (asset2Height / watermarkAsset2.height);
+          ctx.globalAlpha = 1.0; 
+          const asset2Y = watermarkBaseY - asset2Height; 
+          ctx.drawImage(watermarkAsset2, currentWatermarkX, asset2Y, asset2Width, asset2Height);
+          currentWatermarkX += asset2Width + watermarkSpacing; 
+      }
+
+      // Draw logo.png watermark (height 49px, opacity 100%)
+      if (watermarkLogoLoaded) {
+          const logoHeight = 49; 
+          const logoWidth = watermarkLogo.width * (logoHeight / watermarkLogo.height);
+          ctx.globalAlpha = 1.0; 
+          const logoY = watermarkBaseY - logoHeight;
+          ctx.drawImage(watermarkLogo, currentWatermarkX, logoY, logoWidth, logoHeight);
+      }
+      ctx.restore(); 
+
+
+      // --- LAYER 5: Main Title Text (TOP-MOST LAYER) ---
       ctx.textAlign = align;
       ctx.textBaseline = 'top';
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
@@ -494,48 +570,11 @@
         ctx.fillText(titleLines?.[i] ?? '', posX, currentTextY + i * updatedTitleLineHeight);
       }
 
-      // Clear shadows before drawing logos
+      // Clear shadows after text, before next drawCanvas if any
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
-
-      // 7. Draw Watermarks (Fixed bottom-left)
-      const watermarkBottomPadding = 35; 
-      const watermarkLeftPadding = 50;
-      const watermarkSpacing = 10; 
-
-      let currentWatermarkX = watermarkLeftPadding;
-      let watermarkBaseY = canvas.height - watermarkBottomPadding; 
-
-      ctx.save(); 
-
-      // Draw Asset 2@1.png watermark (height 42px, opacity 100%)
-      if (watermarkAsset2Loaded) {
-          const asset2Height = 42; 
-          const asset2Width = watermarkAsset2.width * (asset2Height / watermarkAsset2.height);
-          
-          ctx.globalAlpha = 1.0; // Set opacity for Asset 2@1.png to 100%
-          
-          const asset2Y = watermarkBaseY - asset2Height; 
-          
-          ctx.drawImage(watermarkAsset2, currentWatermarkX, asset2Y, asset2Width, asset2Height);
-          currentWatermarkX += asset2Width + watermarkSpacing; 
-      }
-
-      // Draw logo.png watermark (height 49px, opacity 100%)
-      if (watermarkLogoLoaded) {
-          const logoHeight = 49; 
-          const logoWidth = watermarkLogo.width * (logoHeight / watermarkLogo.height);
-
-          ctx.globalAlpha = 1.0; // Set opacity for logo.png to 100%
-
-          const logoY = watermarkBaseY - logoHeight;
-
-          ctx.drawImage(watermarkLogo, currentWatermarkX, logoY, logoWidth, logoHeight);
-      }
-
-      ctx.restore(); 
     }
 
     function downloadImage() {
@@ -553,7 +592,7 @@
       try {
         const link = document.createElement('a');
         link.download = 'social-media-image.webp';
-        link.href = canvas.toDataURL('image/webp', 0.7); 
+        link.href = canvas.toDataURL('image/webp', 1.0);  // Changed quality to 1.0 for best quality
 
         link.click();
 
@@ -573,7 +612,11 @@
       }
     }
 
-    window.onload = drawCanvas;
+    // Initial call to set up controls correctly
+    window.onload = () => {
+        drawCanvas();
+        // No need for toggleImagePositionControls() anymore, as it's always visible
+    };
   </script>
 </body>
 </html>
