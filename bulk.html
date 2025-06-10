@@ -123,11 +123,6 @@
 
     const MAX_DIMENSION = 2000; // Maximum width or height for output images
 
-    // Logo Padding (Adjusted as requested, now refers to *fixed margins*)
-    const LOGO_BOTTOM_PADDING = 50; 
-    const LOGO_LEFT_PADDING = 100;
-    const LOGO_SPACING = 10; // Spacing between logos
-
     // Dynamic Logo Sizing Parameters
     const CENTER_LOGO_WIDTH_RATIO = 0.5; // Central logo will be 50% of image width
     const MAX_CENTER_LOGO_WIDTH = 800; // Max pixel width for central logo
@@ -135,6 +130,13 @@
     const BOTTOM_LOGO_HEIGHT_RATIO_ASSET2 = 0.05; // Asset 2 logo height will be 5% of image height
     const BOTTOM_LOGO_HEIGHT_RATIO_MAIN = 0.06; // Main logo height will be 6% of image height
     const MAX_BOTTOM_LOGO_HEIGHT = 60; // Max pixel height for bottom logos
+
+    // Dynamic Padding Parameters
+    const LOGO_BOTTOM_PADDING_RATIO = 0.04; // 4% of image height for bottom padding
+    const LOGO_LEFT_PADDING_RATIO = 0.05; // 5% of image width for left padding
+    const MIN_PADDING_PX = 15; // Minimum padding in pixels, for very small images
+    const LOGO_SPACING = 10; // Fixed spacing between logos (can be made dynamic too if needed)
+
 
     let filesToProcess = [];
     let processedImages = []; // Stores { name: originalFileName, url: dataURL }
@@ -371,8 +373,12 @@
                 }
 
                 // LAYER 4: Bottom-Left Watermarks
-                let currentWatermarkX = LOGO_LEFT_PADDING;
-                const watermarkBaseY = newHeight - LOGO_BOTTOM_PADDING;
+                // Calculate dynamic padding for bottom logos
+                const dynamicLeftPadding = Math.max(newWidth * LOGO_LEFT_PADDING_RATIO, MIN_PADDING_PX);
+                const dynamicBottomPadding = Math.max(newHeight * LOGO_BOTTOM_PADDING_RATIO, MIN_PADDING_PX);
+                
+                let currentWatermarkX = dynamicLeftPadding;
+                const watermarkBaseY = newHeight - dynamicBottomPadding;
 
                 offscreenCtx.save();
                 // Draw Asset 2@1.png watermark (dynamic height)
