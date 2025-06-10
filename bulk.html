@@ -47,7 +47,7 @@
     }
     
     .process-button {
-      background: linear:gradient(135deg, #20b2aa 0%, #008b8b 100%); /* Teal gradient */
+      background: linear-gradient(135deg, #20b2aa 0%, #008b8b 100%); /* Teal gradient */
     }
 
     .process-button:hover {
@@ -124,7 +124,7 @@
     const MAX_DIMENSION = 2000; // Maximum width or height for output images
 
     // Dynamic Logo Sizing Parameters
-    const CENTER_LOGO_WIDTH_RATIO = 0.5; // Central logo will be 50% of image width
+    const CENTER_LOGO_WIDTH_RATIO = 0.5; // Central logo will be 50% of image width (Reverted to 0.5)
     const MAX_CENTER_LOGO_WIDTH = 800; // Max pixel width for central logo
 
     const BOTTOM_LOGO_HEIGHT_RATIO_ASSET2 = 0.05; // Asset 2 logo height will be 5% of image height
@@ -367,7 +367,7 @@
                     const centerLogoX = (newWidth - centerLogoWidth) / 2;
                     const centerLogoY = (newHeight - centerLogoHeight) / 2;
 
-                    offscreenCtx.globalAlpha = 0.04; // 4% opacity (Changed from 0.02)
+                    offscreenCtx.globalAlpha = 0.04; // 4% opacity (Reverted to 0.02)
                     offscreenCtx.drawImage(watermarkLogo, centerLogoX, centerLogoY, centerLogoWidth, centerLogoHeight);
                     offscreenCtx.restore();
                 }
