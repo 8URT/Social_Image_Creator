@@ -21,8 +21,9 @@
       background-color: #2d3748; /* Darker background for panels */
       color: #f7fafc; /* Light text for panels */
     }
+    /* Updated title color */
     .text-gray-800 {
-      color: #3F51B5; /* Light text for headings */
+      color: #3F51B5; /* Social Media Image Creator title color */
     }
     .border-gray-200 {
       border-color: #4a5568; /* Darker borders */
@@ -284,7 +285,6 @@
     const subtitleColorPicker = document.getElementById('subtitleColorPicker');
     const subtitleColorPresets = document.getElementById('subtitleColorPresets');
 
-    // New Subtitle Background Color elements
     const subtitleBackgroundColorPicker = document.getElementById('subtitleBackgroundColorPicker');
     const subtitleBackgroundColorPresets = document.getElementById('subtitleBackgroundColorPresets');
 
@@ -292,11 +292,9 @@
     const backgroundColorPresets = document.getElementById('backgroundColorPresets');
     const backgroundBlendMode = document.getElementById('backgroundBlendMode');
 
-    // Image Size Mode Button and State
     const imageSizeModeButton = document.getElementById('imageSizeMode');
-    let imageCoverMode = false; // false = 'fit', true = 'cover'
+    let imageCoverMode = false;
 
-    // Image Position Controls
     const imageOffsetXInput = document.getElementById('imageOffsetX');
     const imageOffsetYInput = document.getElementById('imageOffsetY');
     const imageOffsetXValueSpan = document.getElementById('imageOffsetXValue');
@@ -306,9 +304,8 @@
 
     let uploadedImage = null;
 
-    // Main Logo (bottom center)
     const logo = new Image();
-    logo.src = 'assets/logo.png'; // Make sure this path is correct
+    logo.src = 'assets/logo.png';
     let logoLoaded = false;
     logo.onload = () => {
       logoLoaded = true;
@@ -320,13 +317,12 @@
       drawCanvas();
     };
 
-    // New Top-Right Logo
     const logo2 = new Image();
-    logo2.src = 'assets/Asset 2@1.png'; // Make sure this path is correct
+    logo2.src = 'assets/Asset 2@1.png';
     let logo2Loaded = false;
     logo2.onload = () => {
       logo2Loaded = true;
-      drawCanvas(); // Redraw once this logo is loaded
+      drawCanvas();
     };
     logo2.onerror = () => {
       console.warn("Top-right logo (Asset 2@1.png) failed to load. Please check its path in the 'assets' folder.");
@@ -361,7 +357,7 @@
         const img = new Image();
         img.onload = () => {
           uploadedImage = img;
-          resetImageOffsets(); // Reset offsets when a new image is loaded
+          resetImageOffsets();
           drawCanvas();
         };
         img.onerror = () => {
@@ -426,26 +422,23 @@
       loadImageFromFile(file);
     });
 
-    // Event listeners for all input elements that trigger redraw
     ([
       titleInput, subtitleInput, placementInput,
       titleSizeInput, subtitleSizeInput,
       subtitleBackgroundToggle, subtitleColorPicker, subtitleColorPresets,
-      subtitleBackgroundColorPicker, subtitleBackgroundColorPresets, // New subtitle background color elements
+      subtitleBackgroundColorPicker, subtitleBackgroundColorPresets,
       backgroundColorPicker, backgroundColorPresets, backgroundBlendMode,
-      imageOffsetXInput, imageOffsetYInput // Image offset inputs
+      imageOffsetXInput, imageOffsetYInput
     ]).forEach(el => {
       el.addEventListener('input', drawCanvas);
     });
 
-    // Event listener for image size mode toggle
     imageSizeModeButton.addEventListener('click', () => {
       imageCoverMode = !imageCoverMode;
       imageSizeModeButton.textContent = imageCoverMode ? 'Fit to Frame' : 'Fill Frame (Cover)';
-      drawCanvas(); // Redraw with the new mode
+      drawCanvas();
     });
 
-    // Functions to handle image offset changes
     function resetImageOffsets() {
         currentImageOffsetX = 0;
         currentImageOffsetY = 0;
@@ -453,7 +446,6 @@
         imageOffsetYInput.value = 0;
         imageOffsetXValueSpan.textContent = 0;
         imageOffsetYValueSpan.textContent = 0;
-        // No drawCanvas() here, as it's called by loadImageFromFile after this.
     }
 
     imageOffsetXInput.addEventListener('input', (e) => {
@@ -489,7 +481,6 @@
         drawCanvas();
     });
 
-    // Subtitle Background Color synchronization
     subtitleBackgroundColorPicker.addEventListener('input', () => {
         const selectedValue = subtitleBackgroundColorPicker.value.toUpperCase();
         let found = false;
@@ -511,7 +502,6 @@
         drawCanvas();
     });
 
-
     backgroundColorPicker.addEventListener('input', () => {
         const selectedValue = backgroundColorPicker.value.toUpperCase();
         let found = false;
@@ -523,7 +513,7 @@
             }
         }
         if (!found) {
-            backgroundColorPresets.selectedIndex = -1; // Select "custom" implicitly
+            backgroundColorPresets.selectedIndex = -1;
         }
         drawCanvas();
     });
@@ -533,7 +523,6 @@
         drawCanvas();
     });
 
-    // Helper function to convert hex color to RGB array
     function hexToRgb(hex) {
         const bigint = parseInt(hex.slice(1), 16);
         const r = (bigint >> 16) & 255;
@@ -543,93 +532,79 @@
     }
 
     function drawCanvas() {
-      // 1. Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 2. Draw Background Image (if available)
       if (uploadedImage) {
         const imgRatio = uploadedImage.width / uploadedImage.height;
         const canvasRatio = canvas.width / canvas.height;
 
-        // Save initial state before applying filters or global composite operations
         ctx.save();
 
-        // Draw blurred background if NOT in cover mode
         if (!imageCoverMode) {
             ctx.filter = 'blur(30px)';
             let blurImgW = canvas.width, blurImgH = canvas.height;
-            if (imgRatio < canvasRatio) { // Image is taller than canvas, fill canvas width
+            if (imgRatio < canvasRatio) {
                 blurImgH = canvas.width / imgRatio;
                 blurImgW = canvas.width;
-            } else { // Image is wider than canvas, fill canvas height
+            } else {
                 blurImgW = canvas.height * imgRatio;
                 blurImgH = canvas.height;
             }
             ctx.drawImage(uploadedImage, (canvas.width - blurImgW) / 2, (canvas.height - blurImgH) / 2, blurImgW, blurImgH);
-            ctx.filter = 'none'; // Reset filter immediately after use
+            ctx.filter = 'none';
         }
 
-        // Draw the main sharp image based on mode
         let mainImgX = 0, mainImgY = 0, mainImgW = canvas.width, mainImgH = canvas.height;
 
         if (imageCoverMode) {
-          // "Cover" mode: Fill the canvas, potentially cropping
-          if (imgRatio > canvasRatio) { // Image is wider than canvas
+          if (imgRatio > canvasRatio) {
             mainImgH = canvas.height;
             mainImgW = mainImgH * imgRatio;
             mainImgX = (canvas.width - mainImgW) / 2;
-          } else { // Image is taller than canvas
+          } else {
             mainImgW = canvas.width;
             mainImgH = mainImgW / imgRatio;
             mainImgY = (canvas.height - mainImgH) / 2;
           }
-          // Apply offsets for image positioning
           mainImgX += currentImageOffsetX;
           mainImgY += currentImageOffsetY;
         } else {
-          // "Fit" mode: Show the entire image, potentially with blank areas (overlaid on blur)
-          if (imgRatio < canvasRatio) { // Image is taller than canvas
+          if (imgRatio < canvasRatio) {
             mainImgH = canvas.height;
             mainImgW = mainImgH * imgRatio;
             mainImgX = (canvas.width - mainImgW) / 2;
-          } else { // Image is wider than canvas
+          } else {
             mainImgW = canvas.width;
             mainImgH = mainImgW / imgRatio;
             mainImgY = (canvas.height - mainImgH) / 2;
           }
-          // Apply offsets for image positioning
           mainImgX += currentImageOffsetX;
           mainImgY += currentImageOffsetY;
         }
         ctx.drawImage(uploadedImage, mainImgX, mainImgY, mainImgW, mainImgH);
 
-        // Light overall overlay to blend (always applied on top of main image)
         ctx.fillStyle = 'rgba(0,0,0,0.1)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.restore(); // Restore state after drawing main image and its light overlay
+        ctx.restore();
       } else {
-        // Fallback if no image uploaded
-        ctx.fillStyle = '#4a5568'; // Darker fallback background
+        ctx.fillStyle = '#4a5568';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#a0aec0'; // Lighter fallback text
+        ctx.fillStyle = '#a0aec0';
         ctx.font = "700 36px 'Fira Sans', sans-serif";
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText("Drag & Drop, Click to Upload, or Paste Image", canvas.width / 2, canvas.height / 2);
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        return; // Stop drawing if no image
+        return;
       }
 
-      // 3. Calculate Main Logo (logo.png) Position (needed for text placement)
       const logoWidth = 400;
       const logoHeight = logoLoaded ? logo.height * (logoWidth / logo.width) : 100;
       const logoX = (canvas.width - logoWidth) / 2;
       const logoY = canvas.height - logoHeight - 30;
 
-
-      // 4. Text Wrapping and Sizing Logic
       const titleRaw = titleInput.value.trim();
       const subtitleRaw = subtitleInput.value.trim().toUpperCase();
       const placement = parseInt(placementInput.value);
@@ -637,7 +612,7 @@
       const subtitleSizeAdj = parseInt(subtitleSizeInput.value);
       const subtitleBgEnabled = subtitleBackgroundToggle.checked;
       const subtitleTextColor = subtitleColorPicker.value;
-      const subtitleBgColor = subtitleBackgroundColorPicker.value; // Get subtitle background color
+      const subtitleBgColor = subtitleBackgroundColorPicker.value;
 
       const paddingLeft = 10;
       const paddingRight = 10;
@@ -648,7 +623,6 @@
 
       const maxTextWidth = canvas.width - 200;
 
-      // Subtitle Wrapping Logic
       let subtitleLines = [];
       ctx.font = `700 ${subtitleSizeAdj}px 'Fira Sans', sans-serif`;
       const subtitleWords = subtitleRaw.split(' ');
@@ -673,8 +647,6 @@
       const subtitleLineHeight = subtitleSizeAdj * 1.05;
       let totalSubtitleHeight = subtitleLines.length * subtitleLineHeight;
 
-
-      // Title Wrapping Logic
       let titleLines = [];
       function wrapTitleLines() {
         titleLines = [];
@@ -700,35 +672,31 @@
 
       const updatedTitleLineHeight = titleSize * 1.05;
 
-      // Calculate total text block height
       let textBlockHeight = 0;
       if (subtitleLines.length > 0) {
           textBlockHeight += totalSubtitleHeight;
           if (subtitleBgEnabled) {
               textBlockHeight += (paddingTop + paddingBottom);
           }
-          textBlockHeight += 12; // Base spacing between subtitle and title
+          textBlockHeight += 12;
       }
       textBlockHeight += titleLines.length * updatedTitleLineHeight;
 
-
-      // 5. Determine Text Placement Coordinates
       const placementMap = {
-        1: { x: 100, align: 'left', y: 120 },
+        1: { x: 100, align: 'left', y: 150 }, // Top Left with 150px padding
         3: { x: 100, align: 'left', y: 0 },
-        5: { x: canvas.width / 2, align: 'center', y: 120 },
+        5: { x: canvas.width / 2, align: 'center', y: 150 }, // Top Center with 150px padding
         6: { x: canvas.width / 2, align: 'center', y: 0 }
       };
 
       let posX = placementMap?.[placement]?.x ?? 100;
       let align = placementMap?.[placement]?.align ?? 'left';
-      let posY = placementMap?.[placement]?.y ?? 120;
+      let posY = placementMap?.[placement]?.y ?? 150; // Default to 150 for top placements
 
       if (placement === 3 || placement === 6) {
         posY = logoY - 100 - textBlockHeight;
       }
 
-      // 6. Draw Placement-Specific Gradient Overlay
       const gradientPadding = 150;
       let gradient;
 
@@ -736,11 +704,10 @@
       const selectedBlendMode = backgroundBlendMode.value;
       const [r, g, b] = hexToRgb(selectedBgColorHex);
 
-      // Save the current canvas state before changing globalCompositeOperation for the gradient
       ctx.save();
       ctx.globalCompositeOperation = selectedBlendMode;
 
-      if (placement === 1 || placement === 5) { // Top placements
+      if (placement === 1 || placement === 5) {
         const gradientEndY = posY + textBlockHeight + gradientPadding;
         gradient = ctx.createLinearGradient(0, 0, 0, gradientEndY);
 
@@ -750,7 +717,7 @@
 
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, gradientEndY);
-      } else if (placement === 3 || placement === 6) { // Bottom placements
+      } else if (placement === 3 || placement === 6) {
         const gradientStartY = posY - gradientPadding;
         gradient = ctx.createLinearGradient(0, gradientStartY, 0, canvas.height);
 
@@ -762,12 +729,8 @@
         ctx.fillRect(0, gradientStartY, canvas.width, canvas.height - gradientStartY);
       }
 
-      // Restore the canvas state, resetting globalCompositeOperation to 'source-over'
       ctx.restore();
 
-
-      // 7. Draw Text (Subtitle and Title)
-      // These will now draw with the default 'source-over' blend mode on top of everything
       ctx.textAlign = align;
       ctx.textBaseline = 'top';
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
@@ -777,7 +740,6 @@
 
       let currentTextY = posY;
 
-      // Draw subtitle text and background
       if (subtitleLines.length > 0) {
           ctx.font = `700 ${subtitleSizeAdj}px 'Fira Sans', sans-serif`;
 
@@ -791,17 +753,16 @@
               subtitleBgX -= (maxSubtitleLineTextWidth + paddingLeft + paddingRight) / 2;
           } else if (align === 'right') {
               subtitleBgX -= (maxSubtitleLineTextWidth + paddingLeft + paddingRight);
-          } else { // 'left' alignment
+          } else {
               subtitleBgX -= paddingLeft;
           }
 
           if (subtitleBgEnabled) {
-              ctx.fillStyle = subtitleBgColor; // Use the selected subtitle background color
+              ctx.fillStyle = subtitleBgColor;
               const bgWidth = maxSubtitleLineTextWidth + paddingLeft + paddingRight;
               const bgY = currentTextY - paddingTop;
               const bgHeight = totalSubtitleHeight + (paddingTop + paddingBottom);
 
-              // Rounded rectangle for subtitle background
               ctx.beginPath();
               ctx.moveTo(subtitleBgX + borderRadius, bgY);
               ctx.lineTo(subtitleBgX + bgWidth - borderRadius, bgY);
@@ -816,7 +777,6 @@
               ctx.fill();
           }
 
-          // Draw each subtitle line
           ctx.fillStyle = subtitleTextColor;
           for (let i = 0; i < subtitleLines.length; i++) {
               ctx.fillText(subtitleLines[i], posX, currentTextY + i * subtitleLineHeight);
@@ -826,24 +786,20 @@
           if (subtitleBgEnabled) {
               currentTextY += (paddingTop + paddingBottom);
           }
-          currentTextY += 12; // Spacing to title
+          currentTextY += 12;
       }
 
-
-      // Draw main title text
       ctx.fillStyle = 'white';
       ctx.font = `800 ${titleSize}px 'Fira Sans', sans-serif`;
       for (let i = 0; i < titleLines.length; i++) {
         ctx.fillText(titleLines?.[i] ?? '', posX, currentTextY + i * updatedTitleLineHeight);
       }
 
-      // Clear shadows before drawing logos
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
 
-      // 8. Draw Top-Right Logo (Asset 2@1.png)
       const logo2DesiredWidth = 100;
       let logo2Height = 0;
       if (logo2Loaded) {
@@ -855,7 +811,6 @@
           console.warn("Top-right logo not loaded, skipping drawing for this frame.");
       }
 
-      // 9. Draw Main Logo (logo.png)
       if (logoLoaded) {
           ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
       } else {
@@ -878,7 +833,7 @@
       try {
         const link = document.createElement('a');
         link.download = 'social-media-image.png';
-        link.href = canvas.toDataURL('image/png'); // Kept as PNG for higher quality as per original
+        link.href = canvas.toDataURL('image/png');
 
         link.click();
 
