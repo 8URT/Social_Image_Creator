@@ -13,15 +13,24 @@
             padding: 24px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Ensures buttons align at bottom */
         }
         .tool-card:hover {
             transform: translateY(-5px);
+        }
+        .tool-card img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 1rem;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body class="bg-gray-100">
 
-    <nav class="bg-gray-800">
+    <nav class="bg-gray-800 fixed top-0 w-full z-50 shadow-lg">
         <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
             <div class="relative flex h-16 items-center justify-between">
                 <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
@@ -38,14 +47,14 @@
                 </div>
                 <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                     <div class="flex shrink-0 items-center">
-                        <img class="h-8 w-auto" src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500" alt="Your Company">
+                        <img class="h-8 w-auto" src="./assets/logo.png" alt="Your Company Logo">
                     </div>
                     <div class="hidden sm:ml-6 sm:block">
                         <div class="flex space-x-4">
-                            <a href="#" class="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white" aria-current="page">Dashboard</a>
-                            <a href="#social-image-creator" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Social Image Creator</a>
-                            <a href="#photo-watermarker" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Photo Watermarker</a>
-                            <a href="#bulk-watermarking" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Bulk Watermarking</a>
+                            <a href="./index.html" class="nav-link rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" data-page-path="index.html">Dashboard</a>
+                            <a href="https://8urt.github.io/Social_Image_Creator/image_creator15.html" class="nav-link rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" data-page-path="image_creator15.html">Social Image Creator</a>
+                            <a href="https://8urt.github.io/Social_Image_Creator/watermarker" class="nav-link rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" data-page-path="watermarker">Photo Watermarker</a>
+                            <a href="https://8urt.github.io/Social_Image_Creator/bulk.html" class="nav-link rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" data-page-path="bulk.html">Bulk Watermarking</a>
                         </div>
                     </div>
                 </div>
@@ -79,34 +88,36 @@
 
         <div class="sm:hidden hidden" id="mobile-menu">
             <div class="space-y-1 px-2 pt-2 pb-3">
-                <a href="#" class="block rounded-md bg-gray-900 px-3 py-2 text-base font-medium text-white" aria-current="page">Dashboard</a>
-                <a href="#social-image-creator" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Social Image Creator</a>
-                <a href="#photo-watermarker" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Photo Watermarker</a>
-                <a href="#bulk-watermarking" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Bulk Watermarking</a>
+                <a href="./index.html" class="nav-link block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white" data-page-path="index.html">Dashboard</a>
+                <a href="https://8urt.github.io/Social_Image_Creator/image_creator15.html" class="nav-link block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white" data-page-path="image_creator15.html">Social Image Creator</a>
+                <a href="https://8urt.github.io/Social_Image_Creator/watermarker" class="nav-link block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white" data-page-path="watermarker">Photo Watermarker</a>
+                <a href="https://8urt.github.io/Social_Image_Creator/bulk.html" class="nav-link block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white" data-page-path="bulk.html">Bulk Watermarking</a>
             </div>
         </div>
     </nav>
 
-    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-8">Your Image Creation Tools</h1>
+    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 pt-24"> <h1 class="text-3xl font-bold text-gray-900 mb-8">Your Image Creation Tools</h1>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div id="social-image-creator" class="tool-card">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">Social Image Creator</h2>
+                <img src="./assets/social-media-image (3).png" alt="Illustration of social media image creation" class="w-full h-48 object-cover rounded-md mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Social Image Creator</h2>
                 <p class="text-gray-600 mb-4">Quickly generate eye-catching images optimized for social media platforms.</p>
-                <a href="https://8urt.github.io/Social_Image_Creator/image_creator15.html" class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">Launch Tool</a>
+                <a href="https://8urt.github.io/Social_Image_Creator/image_creator15.html" class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors mt-auto">Launch Tool</a>
             </div>
 
             <div id="photo-watermarker" class="tool-card">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">Photo Watermarker</h2>
+                <img src="./assets/Watermarked.webp" alt="Illustration of photo watermarking" class="w-full h-48 object-cover rounded-md mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Photo Watermarker</h2>
                 <p class="text-gray-600 mb-4">Add watermarks to your photos directly on the site to protect your work.</p>
-                <a href="https://8urt.github.io/Social_Image_Creator/watermarker" class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">Launch Tool</a>
+                <a href="https://8urt.github.io/Social_Image_Creator/watermarker" class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors mt-auto">Launch Tool</a>
             </div>
 
             <div id="bulk-watermarking" class="tool-card">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">Bulk Image Watermarking</h2>
+                <img src="./assets/watermarked_pexels-monicore-1391487.webp" alt="Illustration of bulk image watermarking" class="w-full h-48 object-cover rounded-md mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Bulk Image Watermarking</h2>
                 <p class="text-gray-600 mb-4">Efficiently watermark multiple images at once, perfect for Facebook and other platforms.</p>
-                <a href="https://8urt.github.io/Social_Image_Creator/bulk.html" class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">Launch Tool</a>
+                <a href="https://8urt.github.io/Social_Image_Creator/bulk.html" class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors mt-auto">Launch Tool</a>
             </div>
         </div>
     </main>
@@ -139,6 +150,52 @@
                 userDropdown.classList.add('hidden');
                 userMenuButton.setAttribute('aria-expanded', 'false');
             }
+        });
+
+        // JavaScript for highlighting active navigation link
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const currentPathname = window.location.pathname; // e.g., /Social_Image_Creator/index.html
+
+            navLinks.forEach(link => {
+                const linkHref = link.href; // Full URL from the link
+                const linkPathname = new URL(linkHref).pathname; // e.g., /Social_Image_Creator/watermarker
+
+                // Normalize paths for comparison (handle index.html and trailing slashes)
+                let normalizedCurrentPath = currentPathname;
+                if (normalizedCurrentPath.endsWith('/')) {
+                    normalizedCurrentPath += 'index.html';
+                }
+
+                let normalizedLinkPath = linkPathname;
+                if (normalizedLinkPath.endsWith('/')) {
+                    normalizedLinkPath += 'index.html';
+                }
+
+                // Remove the base path to compare just the relevant part (e.g., "index.html" vs "image_creator15.html")
+                // Assumes your GitHub Pages base path is '/Social_Image_Creator/'
+                const basePath = '/Social_Image_Creator/';
+                const currentRelativePath = normalizedCurrentPath.substring(basePath.length);
+                const linkRelativePath = normalizedLinkPath.substring(basePath.length);
+                
+                // Special handling for the root/dashboard page
+                const isDashboard = (currentRelativePath === '' || currentRelativePath === 'index.html');
+                const isLinkDashboard = (linkRelativePath === '' || linkRelativePath === 'index.html');
+
+
+                if (
+                    (isDashboard && isLinkDashboard) || // Both are dashboard
+                    (!isDashboard && !isLinkDashboard && currentRelativePath === linkRelativePath) // Neither are dashboard, and paths match exactly
+                ) {
+                    link.classList.remove('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+                    link.classList.add('bg-gray-900', 'text-white');
+                    link.setAttribute('aria-current', 'page');
+                } else {
+                    link.classList.remove('bg-gray-900', 'text-white');
+                    link.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+                    link.removeAttribute('aria-current');
+                }
+            });
         });
     </script>
 </body>
