@@ -84,7 +84,7 @@
               <input type="file" id="imageUpload" accept="image/*" multiple class="hidden" />
               <p class="text-base text-primary font-bold mb-3">Drag & Drop multiple images here</p>
               <button type="button" onclick="document.getElementById('imageUpload').click()" class="import-button text-white px-4 py-2 rounded-full font-bold transition-all duration-300 hover:-translate-y-1 text-sm">or Click to Select Images</button>
-              <div class="mt-3 p-3 bg-gray-700 rounded-xl text-xs text-secondary leading-relaxed">
+              <div class="mt-3 p-3 bg-gray-700 rounded-xl text-xs text-secondary leading-relaxed" id="imageNote">
                 <span class="text-purple-300 font-bold">Note:</span> Images will be rendered in their original aspect ratio, scaled to a maximum of 2000px (width or height).
               </div>
           </div>
@@ -125,6 +125,401 @@
       </div>
     </div>
   </div>
-  <script src="YOUR_JAVASCRIPT_HERE.js"></script>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const imageInput = document.getElementById('imageUpload');
+    const processImagesButton = document.getElementById('processImagesButton');
+    const downloadAllButton = document.getElementById('downloadAllButton');
+    const processingStatus = document.getElementById('processingStatus');
+    const processedCountText = document.getElementById('processedCountText');
+    const imageNote = document.getElementById('imageNote'); // Get the note element
+
+    // Get the new radio buttons
+    const outputSizeRadios = document.querySelectorAll('input[name="outputSize"]');
+
+    const MAX_DIMENSION_ORIGINAL = 2000; // Maximum width or height for "Original" output
+    const MAX_DIMENSION_COMPRESSED = 1920; // Maximum width or height for "Compressed" output
+    const WEBP_QUALITY_COMPRESSED = 0.8; // Quality for "Compressed" output
+
+    // Dynamic Logo Sizing Parameters
+    const CENTER_LOGO_WIDTH_RATIO = 0.5;
+    const MAX_CENTER_LOGO_WIDTH = 800;
+
+    const BOTTOM_LOGO_HEIGHT_RATIO_ASSET2 = 0.05;
+    const BOTTOM_LOGO_HEIGHT_RATIO_MAIN = 0.06;
+    const MAX_BOTTOM_LOGO_HEIGHT = 60;
+
+    // Dynamic Padding Parameters
+    const LOGO_BOTTOM_PADDING_RATIO = 0.04;
+    const LOGO_LEFT_PADDING_RATIO = 0.05;
+    const MIN_PADDING_PX = 15;
+    const LOGO_SPACING = 10;
+
+    let filesToProcess = [];
+    let processedImages = []; // Stores { name: originalFileName, url: dataURL }
+    let currentProcessedCount = 0;
+    let currentOutputSetting = 'original'; // Default to original
+
+    // Load watermark images
+    const watermarkLogo = new Image();
+    watermarkLogo.src = 'assets/logo.png'; // Make sure this path is correct!
+    let watermarkLogoLoaded = false;
+    watermarkLogo.onload = () => {
+      watermarkLogoLoaded = true;
+      console.log("Watermark logo loaded.");
+      drawInitialCanvas(); // Draw initial canvas with message if logos loaded
+    };
+    watermarkLogo.onerror = () => {
+      console.warn("Watermark logo (assets/logo.png) failed to load. Please ensure the path is correct.");
+      watermarkLogoLoaded = false;
+      drawInitialCanvas();
+    };
+
+    const watermarkAsset2 = new Image();
+    watermarkAsset2.src = 'assets/Asset 2@1.png'; // Make sure this path is correct!
+    let watermarkAsset2Loaded = false;
+    watermarkAsset2.onload = () => {
+      watermarkAsset2Loaded = true;
+      console.log("Watermark Asset 2 loaded.");
+      drawInitialCanvas(); // Draw initial canvas with message if logos loaded
+    };
+    watermarkAsset2.onerror = () => {
+      console.warn("Watermark Asset 2 (assets/Asset 2@1.png) failed to load. Please ensure the path is correct.");
+      watermarkAsset2Loaded = false;
+      drawInitialCanvas();
+    };
+
+    // --- Utility Functions ---
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    function highlight() {
+      document.getElementById('imageDropZone').classList.add('dropzone-hover');
+    }
+
+    function unhighlight() {
+      document.getElementById('imageDropZone').classList.remove('dropzone-hover');
+    }
+
+    function drawInitialCanvas(message = "Upload or Drag & Drop Images Here") {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#3d3d3d'; // Canvas background color
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#a0a0a0'; // Text color
+        ctx.font = "700 24px 'Fira Sans', sans-serif";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+    }
+
+
+    // --- File Handling ---
+    imageInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFiles(e.target.files);
+      } else {
+        resetUI();
+      }
+    });
+
+    const imageDropZone = document.getElementById('imageDropZone');
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      imageDropZone.addEventListener(eventName, preventDefaults, false);
+      document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      imageDropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      imageDropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    imageDropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0) {
+        handleFiles(files);
+      } else {
+        resetUI();
+      }
+    });
+
+    function handleFiles(files) {
+      filesToProcess = Array.from(files).filter(file => file.type.startsWith('image/'));
+      if (filesToProcess.length === 0) {
+        alert("Please select one or more image files.");
+        resetUI();
+        return;
+      }
+      
+      processedImages = [];
+      currentProcessedCount = 0;
+      processImagesButton.disabled = false;
+      processImagesButton.textContent = `Process ${filesToProcess.length} Image(s)`;
+      downloadAllButton.classList.add('hidden');
+      processingStatus.classList.add('hidden');
+      drawInitialCanvas(`Ready to process ${filesToProcess.length} image(s).`);
+    }
+
+    function resetUI() {
+        filesToProcess = [];
+        processedImages = [];
+        currentProcessedCount = 0;
+        imageInput.value = ''; // Clear file input
+        processImagesButton.disabled = true;
+        processImagesButton.textContent = 'Process Images';
+        downloadAllButton.classList.add('hidden');
+        processingStatus.classList.add('hidden');
+        drawInitialCanvas();
+        // Reset note to default
+        imageNote.innerHTML = `<span class="text-purple-300 font-bold">Note:</span> Images will be rendered in their original aspect ratio, scaled to a maximum of 2000px (width or height).`;
+        document.querySelector('input[name="outputSize"][value="original"]').checked = true; // Reset radio button
+        currentOutputSetting = 'original'; // Reset setting
+    }
+
+    // --- New: Handle output size selection ---
+    outputSizeRadios.forEach(radio => {
+        radio.addEventListener('change', (event) => {
+            currentOutputSetting = event.target.value;
+            // Update the canvas note based on the selection
+            if (currentOutputSetting === 'compressed') {
+                imageNote.innerHTML = `
+                    <span class="text-purple-300 font-bold">Note:</span> Images will be compressed to a maximum of 1920px (longest edge) with 80% quality.
+                `;
+            } else {
+                imageNote.innerHTML = `
+                    <span class="text-purple-300 font-bold">Note:</span> Images will be rendered in their original aspect ratio, scaled to a maximum of 2000px (width or height).
+                `;
+            }
+        });
+    });
+
+
+    // --- Processing Logic ---
+    function processSelectedFiles() {
+        if (filesToProcess.length === 0) {
+            alert("No images selected for processing. Please select images first.");
+            return;
+        }
+
+        processImagesButton.disabled = true;
+        downloadAllButton.classList.add('hidden');
+        processingStatus.classList.remove('hidden');
+        processedCountText.textContent = `Processing 0/${filesToProcess.length}...`;
+        drawInitialCanvas("Processing images...");
+
+        // Start processing the first image
+        processImage(0);
+    }
+
+    function processImage(index) {
+        if (index >= filesToProcess.length) {
+            // All images processed
+            processImagesButton.disabled = false;
+            processImagesButton.textContent = 'Processing Complete!';
+            downloadAllButton.classList.remove('hidden');
+            processedCountText.textContent = `Processed ${processedImages.length}/${filesToProcess.length} images.`;
+            // Display the first processed image as a preview on the main canvas
+            if (processedImages.length > 0) {
+                const previewImg = new Image();
+                previewImg.onload = () => {
+                    canvas.width = previewImg.width;
+                    canvas.height = previewImg.height;
+                    ctx.clearRect(0,0,canvas.width, canvas.height);
+                    ctx.drawImage(previewImg, 0, 0);
+                };
+                previewImg.src = processedImages[0].url;
+            } else {
+                drawInitialCanvas("No images processed successfully.");
+            }
+            return;
+        }
+
+        const file = filesToProcess[index];
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                let originalWidth = img.width;
+                let originalHeight = img.height;
+                let newWidth = originalWidth;
+                let newHeight = originalHeight;
+
+                let maxDimension;
+                let outputQuality = 1.0; // Default to full quality for original size
+                let outputMimeType = 'image/webp'; // Always output as webp
+
+                if (currentOutputSetting === 'compressed') {
+                    maxDimension = MAX_DIMENSION_COMPRESSED;
+                    outputQuality = WEBP_QUALITY_COMPRESSED;
+                } else {
+                    maxDimension = MAX_DIMENSION_ORIGINAL;
+                }
+
+                // Scale down if dimensions exceed the chosen maxDimension
+                if (originalWidth > maxDimension || originalHeight > maxDimension) {
+                    const scaleFactor = Math.min(maxDimension / originalWidth, maxDimension / originalHeight);
+                    newWidth = originalWidth * scaleFactor;
+                    newHeight = originalHeight * scaleFactor;
+                }
+
+                // Create off-screen canvas for processing each image
+                const offscreenCanvas = document.createElement('canvas');
+                const offscreenCtx = offscreenCanvas.getContext('2d');
+                offscreenCanvas.width = newWidth;
+                offscreenCanvas.height = newHeight;
+
+                // --- Drawing Layers (from bottom to top) ---
+
+                // LAYER 1: Blur Background
+                offscreenCtx.save();
+                offscreenCtx.filter = 'blur(30px)';
+                // The blur image should always "cover" its drawing area within the offscreenCanvas
+                let blurImgW = newWidth, blurImgH = newHeight;
+                const blurImgRatio = originalWidth / originalHeight; // Use original image ratio for blur
+                const offscreenCanvasRatio = offscreenCanvas.width / offscreenCanvas.height;
+                if (blurImgRatio < offscreenCanvasRatio) {
+                    blurImgH = offscreenCanvas.width / blurImgRatio;
+                    blurImgW = offscreenCanvas.width;
+                } else {
+                    blurImgW = offscreenCanvas.height * blurImgRatio;
+                    blurImgH = offscreenCanvas.height;
+                }
+                offscreenCtx.drawImage(img, (offscreenCanvas.width - blurImgW) / 2, (offscreenCanvas.height - blurImgH) / 2, blurImgW, blurImgH);
+                offscreenCtx.filter = 'none';
+                offscreenCtx.restore();
+
+                // LAYER 2: Main Image (Original Ratio, scaled)
+                offscreenCtx.save();
+                offscreenCtx.drawImage(img, 0, 0, newWidth, newHeight);
+                // Light overall overlay
+                offscreenCtx.fillStyle = 'rgba(0,0,0,0.1)';
+                offscreenCtx.fillRect(0, 0, newWidth, newHeight);
+                offscreenCtx.restore();
+
+                // LAYER 3: Center Watermark Logo
+                if (watermarkLogoLoaded) {
+                    offscreenCtx.save();
+                    // Calculate dynamic size based on image width, capped by MAX_CENTER_LOGO_WIDTH
+                    let centerLogoWidth = newWidth * CENTER_LOGO_WIDTH_RATIO;
+                    if (centerLogoWidth > MAX_CENTER_LOGO_WIDTH) {
+                        centerLogoWidth = MAX_CENTER_LOGO_WIDTH;
+                    }
+                    const centerLogoHeight = watermarkLogo.height * (centerLogoWidth / watermarkLogo.width); // Maintain aspect ratio
+                    
+                    const centerLogoX = (newWidth - centerLogoWidth) / 2;
+                    const centerLogoY = (newHeight - centerLogoHeight) / 2;
+
+                    offscreenCtx.globalAlpha = 0.04;
+                    offscreenCtx.drawImage(watermarkLogo, centerLogoX, centerLogoY, centerLogoWidth, centerLogoHeight);
+                    offscreenCtx.restore();
+                }
+
+                // LAYER 4: Bottom-Left Watermarks
+                // Calculate dynamic padding for bottom logos
+                const dynamicLeftPadding = Math.max(newWidth * LOGO_LEFT_PADDING_RATIO, MIN_PADDING_PX);
+                const dynamicBottomPadding = Math.max(newHeight * LOGO_BOTTOM_PADDING_RATIO, MIN_PADDING_PX);
+                
+                let currentWatermarkX = dynamicLeftPadding;
+                const watermarkBaseY = newHeight - dynamicBottomPadding;
+
+                offscreenCtx.save();
+                // Draw Asset 2@1.png watermark (dynamic height)
+                if (watermarkAsset2Loaded) {
+                    // Calculate dynamic height based on image height, capped by MAX_BOTTOM_LOGO_HEIGHT
+                    let asset2Height = newHeight * BOTTOM_LOGO_HEIGHT_RATIO_ASSET2; 
+                    if (asset2Height > MAX_BOTTOM_LOGO_HEIGHT) {
+                        asset2Height = MAX_BOTTOM_LOGO_HEIGHT;
+                    }
+                    const asset2Width = watermarkAsset2.width * (asset2Height / watermarkAsset2.height);
+                    offscreenCtx.globalAlpha = 1.0;
+                    const asset2Y = watermarkBaseY - asset2Height;
+                    offscreenCtx.drawImage(watermarkAsset2, currentWatermarkX, asset2Y, asset2Width, asset2Height);
+                    currentWatermarkX += asset2Width + LOGO_SPACING; // Update X for next watermark
+                }
+
+                // Draw logo.png watermark (dynamic height)
+                if (watermarkLogoLoaded) {
+                    // Calculate dynamic height based on image height, capped by MAX_BOTTOM_LOGO_HEIGHT
+                    let logoHeight = newHeight * BOTTOM_LOGO_HEIGHT_RATIO_MAIN; 
+                    if (logoHeight > MAX_BOTTOM_LOGO_HEIGHT) {
+                        logoHeight = MAX_BOTTOM_LOGO_HEIGHT;
+                    }
+                    const logoWidth = watermarkLogo.width * (logoHeight / watermarkLogo.height);
+                    offscreenCtx.globalAlpha = 1.0;
+                    const logoY = watermarkBaseY - logoHeight;
+                    offscreenCtx.drawImage(watermarkLogo, currentWatermarkX, logoY, logoWidth, logoHeight); 
+                }
+                offscreenCtx.restore();
+
+                // Store the processed image Data URL
+                processedImages.push({ name: file.name, url: offscreenCanvas.toDataURL(outputMimeType, outputQuality) });
+
+                currentProcessedCount++;
+                processedCountText.textContent = `Processing ${currentProcessedCount}/${filesToProcess.length}...`;
+
+                // Process the next image
+                processImage(index + 1);
+
+            };
+            img.onerror = () => {
+                console.error(`Error loading image: ${file.name}`);
+                currentProcessedCount++; // Still increment count to move forward
+                processedCountText.textContent = `Processing ${currentProcessedCount}/${filesToProcess.length}... (Error with ${file.name})`;
+                processImage(index + 1); // Move to next
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // --- Download All Function ---
+    function downloadAllImages() {
+        if (processedImages.length === 0) {
+            alert("No images processed yet.");
+            return;
+        }
+
+        downloadAllButton.textContent = 'Downloading...';
+        downloadAllButton.disabled = true;
+
+        let downloadCounter = 0;
+        processedImages.forEach((image, i) => {
+            setTimeout(() => { // Add a small delay to prevent browser from blocking multiple downloads
+                const link = document.createElement('a');
+                // Ensure a .webp extension for consistency and proper file recognition
+                link.download = `watermarked_${image.name.replace(/\.[^/.]+$/, "")}.webp`; 
+                link.href = image.url;
+                document.body.appendChild(link); // Required for Firefox to trigger download
+                link.click();
+                document.body.removeChild(link); // Clean up the temporary link element
+
+                downloadCounter++;
+                if (downloadCounter === processedImages.length) {
+                    // All downloads initiated
+                    alert(`Successfully initiated download for ${processedImages.length} images.`);
+                    downloadAllButton.textContent = 'Download All Watermarked';
+                    downloadAllButton.disabled = false;
+                    resetUI(); // Reset UI after successful download
+                }
+            }, i * 100); // 100ms delay between each download to help browsers
+        });
+    }
+
+    // Initial setup on page load
+    window.onload = () => {
+        drawInitialCanvas();
+    };
+
+  </script>
 </body>
 </html>
