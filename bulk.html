@@ -7,7 +7,248 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@700;800&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
-  
+  <script>
+(function() {
+  'use strict';
+
+  const CONFIG = {
+    expectedHash: "6373f7e8a5733aa1b875ec0e46235b67b018e8fe239e47bc35d6d9b792cc3b2c",
+    expiryDays: 7, // number of days before password expires
+    styles: {
+      overlay: {
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        width: '100%',
+        height: '100%',
+        background: 'linear-gradient(135deg, #1a202c 0%, #2d3748 100%)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: '10000',
+        fontFamily: "'Fira Sans', sans-serif"
+      },
+      container: {
+        background: '#2d3748',
+        padding: '40px',
+        borderRadius: '20px',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+        textAlign: 'center',
+        minWidth: '300px',
+        border: '1px solid #4a5568'
+      },
+      title: {
+        color: '#f7fafc',
+        marginBottom: '30px',
+        fontSize: '28px',
+        fontWeight: '700',
+        margin: '0 0 30px 0'
+      },
+      input: {
+        width: '100%',
+        padding: '15px 20px',
+        background: '#1a202c',
+        border: '2px solid #4a5568',
+        borderRadius: '12px',
+        color: '#f7fafc',
+        fontSize: '16px',
+        marginBottom: '15px',
+        transition: 'all 0.3s ease',
+        boxSizing: 'border-box',
+        outline: 'none'
+      },
+      inputFocus: {
+        borderColor: '#66aaff',
+        boxShadow: '0 0 0 3px rgba(102, 170, 255, 0.3)'
+      },
+      button: {
+        width: '100%',
+        padding: '15px',
+        background: 'linear-gradient(135deg, #66aaff 0%, #4299e1 100%)',
+        border: 'none',
+        borderRadius: '12px',
+        color: '#f7fafc',
+        fontSize: '16px',
+        fontWeight: '700',
+        cursor: 'pointer',
+        transition: 'all 0.3s ease'
+      },
+      buttonHover: {
+        transform: 'translateY(-2px)',
+        boxShadow: '0 10px 25px rgba(102, 170, 255, 0.4)'
+      },
+      error: {
+        color: '#fc8181',
+        fontSize: '14px',
+        marginTop: '10px',
+        minHeight: '20px'
+      }
+    }
+  };
+
+  async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function applyStyles(element, styles) {
+    Object.assign(element.style, styles);
+  }
+
+  function createLoginOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'passwordProtectionOverlay';
+    applyStyles(overlay, CONFIG.styles.overlay);
+
+    const container = document.createElement('div');
+    applyStyles(container, CONFIG.styles.container);
+
+    const title = document.createElement('h2');
+    title.textContent = 'Enter Password';
+    applyStyles(title, CONFIG.styles.title);
+
+    const input = document.createElement('input');
+    input.type = 'password';
+    input.id = 'passwordProtectionInput';
+    input.placeholder = 'Password';
+    applyStyles(input, CONFIG.styles.input);
+
+    input.addEventListener('focus', () => {
+      applyStyles(input, CONFIG.styles.inputFocus);
+    });
+    input.addEventListener('blur', () => {
+      input.style.borderColor = '#4a5568';
+      input.style.boxShadow = 'none';
+    });
+
+    const button = document.createElement('button');
+    button.textContent = 'Login';
+    button.id = 'passwordProtectionButton';
+    applyStyles(button, CONFIG.styles.button);
+
+    button.addEventListener('mouseenter', () => {
+      applyStyles(button, CONFIG.styles.buttonHover);
+    });
+    button.addEventListener('mouseleave', () => {
+      button.style.transform = 'translateY(0)';
+      button.style.boxShadow = 'none';
+    });
+
+    const errorMsg = document.createElement('div');
+    errorMsg.id = 'passwordProtectionError';
+    applyStyles(errorMsg, CONFIG.styles.error);
+
+    container.appendChild(title);
+    container.appendChild(input);
+    container.appendChild(button);
+    container.appendChild(errorMsg);
+    overlay.appendChild(container);
+
+    return { overlay, input, button, errorMsg };
+  }
+
+  async function checkPassword(input, errorMsg, overlay) {
+    const password = input.value;
+    
+    if (!password) {
+      errorMsg.textContent = 'Please enter a password';
+      return;
+    }
+
+    try {
+      const hash = await hashPassword(password);
+      
+      if (hash === CONFIG.expectedHash) {
+        // ✅ Save expiry timestamp
+        const expiry = Date.now() + CONFIG.expiryDays * 24 * 60 * 60 * 1000;
+        localStorage.setItem('passwordVerifiedUntil', expiry.toString());
+
+        overlay.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        input.value = '';
+        setTimeout(() => {
+          if (overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+          }
+        }, 500);
+      } else {
+        errorMsg.textContent = 'Incorrect password';
+        input.value = '';
+        input.focus();
+        input.style.animation = 'shake 0.5s ease-in-out';
+        setTimeout(() => {
+          input.style.animation = '';
+        }, 500);
+      }
+    } catch (error) {
+      console.error('Password checking error:', error);
+      errorMsg.textContent = 'An error occurred. Please try again.';
+    }
+  }
+
+  function addShakeAnimation() {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes shake {
+        0%, 20%, 40%, 60%, 80%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function initializePasswordProtection() {
+    // ✅ Check expiry timestamp
+    const expiry = localStorage.getItem('passwordVerifiedUntil');
+    if (expiry && Date.now() < parseInt(expiry, 10)) {
+      return; // still valid, skip overlay
+    } else {
+      localStorage.removeItem('passwordVerifiedUntil'); // expired → reset
+    }
+
+    document.body.style.visibility = 'hidden';
+    document.body.style.overflow = 'hidden';
+    
+    const { overlay, input, button, errorMsg } = createLoginOverlay();
+    document.body.appendChild(overlay);
+    
+    document.body.style.visibility = 'visible';
+    
+    button.addEventListener('click', () => {
+      checkPassword(input, errorMsg, overlay);
+    });
+    
+    input.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        checkPassword(input, errorMsg, overlay);
+      }
+    });
+    
+    setTimeout(() => {
+      input.focus();
+    }, 100);
+    
+    addShakeAnimation();
+  }
+
+  // ✅ Optional logout function
+  window.logoutPasswordProtection = function() {
+    localStorage.removeItem('passwordVerifiedUntil');
+    location.reload();
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializePasswordProtection);
+  } else {
+    initializePasswordProtection();
+  }
+
+})();
+</script>
+
   <style>
     /* Dark Theme Styles */
     .gradient-bg {
